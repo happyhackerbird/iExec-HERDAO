@@ -22,11 +22,202 @@ import Connect from './Connect';
 import { useAccount, useDisconnect } from 'wagmi';
 import { IEXEC_EXPLORER_URL } from '../utils/config';
 import { DataSchema, GrantedAccess } from '@iexec/dataprotector';
+import { ethers } from 'ethers';
+
+const abi = [
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "campaignAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      }
+    ],
+    "name": "CampaignAdded",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "emailSubject",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "emailContent",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "topic",
+        "type": "string"
+      }
+    ],
+    "name": "addCampaign",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "campaignL",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "emailSubject",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "emailContent",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "topic",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "campaigns",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "emailSubject",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "emailContent",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "topic",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "campaignAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getCampaignInfoByAddress",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "emailSubject",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "emailContent",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "topic",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getList",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "emailSubject",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "emailContent",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "topic",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct LoyaltyProgram.Campaign[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
 
 export default function Front() {
   //web3mail dapp END
-  const WEB3MAIL_APP_ENS = 'web3mail.apps.iexec.eth';
-  //connection with wallet
+  // const WEB3MAIL_APP_ENS = 'web3mail.apps.iexec.eth';
+  const contract_address = "0x753e97db842601F3953B69098d2b2E1b53fe0f68"
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+  const contract = new ethers.Contract(contract_address, abi, signer);
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
 
@@ -60,7 +251,7 @@ export default function Front() {
   // const [authorizedUser, setAuthorizedUser] = useState('');
 
   // set campaigns
-  const [campaigns, setCampaigns] = useState<string[]>([]);
+  const [campaigns, setCampaigns] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState('');
 
   //handle functions
@@ -120,8 +311,8 @@ export default function Front() {
 
   const fetchCampaigns = async () => {
     try {
-      const campaignAddresses = await yourContract.getCampaings();
-      setCampaigns(campaignAddresses);
+      const campaigns = await contract.getList();
+      setCampaigns(campaigns);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
     }
@@ -134,7 +325,7 @@ export default function Front() {
       const accessHash = await grantAccessFunc(
         protectedData,
         selectedCampaign, // Use the selected campaign address as the authorized user
-        WEB3MAIL_APP_ENS,
+        contract_address,
         accessNumber
       );
       setErrorGrant('');
@@ -155,7 +346,7 @@ export default function Front() {
       const tx = await revokeAccessFunc(
         protectedData,
         selectedCampaign,
-        WEB3MAIL_APP_ENS
+        contract_address
       );
       setRevokeAccess(tx);
     } catch (error) {
@@ -174,14 +365,15 @@ export default function Front() {
     const campaignInfo = await fetchCampaignInfo(selectedCampaign);
 
     // Extract campaign information from the fetched data
-    const { emailSubject, emailContent } = campaignInfo;
+    const emailSubject = campaignInfo.emailSubject;
+    const emailContent = campaignInfo.emailContent;
     sendMail(emailSubject, emailContent, protectedData);
   };
 
   const fetchCampaignInfo = async (campaignAddress: string) => {
     // Implement logic to interact with the contract and fetch campaign details based on the campaignAddress
     // Return the campaign information (emailSubject, emailContent) from the contract
-    const campaignInfo = await yourContract.getCampaignInfoByAddress(campaignAddress);
+    const campaignInfo = await contract.getCampaignInfoByAddress(campaignAddress);
     return campaignInfo;
   };
 
@@ -332,9 +524,9 @@ export default function Front() {
                 value={selectedCampaign}
                 onChange={handleCampaignChange}
               >
-                {campaigns.map((campaignAddress) => (
-                  <MenuItem key={campaignAddress} value={campaignAddress}>
-                    {campaignAddress}
+                {campaigns.map((campaignAddress, index) => (
+                  <MenuItem key={index} value={campaignAddress}>
+                    Campaign {index + 1}
                   </MenuItem>
                 ))}
               </TextField>
