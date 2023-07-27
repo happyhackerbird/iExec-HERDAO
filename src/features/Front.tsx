@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   TextField,
   Typography,
@@ -10,12 +10,14 @@ import {
   AppBar,
   Toolbar,
   Container,
+  MenuItem,
 } from '@mui/material';
 import {
   protectDataFunc,
   grantAccessFunc,
   revokeAccessFunc,
 } from './protectDataFunc';
+import { sendMail } from "./protectedMailFunc";
 import Connect from './Connect';
 import { useAccount, useDisconnect } from 'wagmi';
 import { IEXEC_EXPLORER_URL } from '../utils/config';
@@ -48,11 +50,18 @@ export default function Front() {
   const [email, setEmail] = useState('');
   const [isValidEmail, setIsValidEmail] = useState(true);
 
+  // preferences 
+  const [interests, setInterests] = useState('');
+
   //set access number
   const [accessNumber, setAccessNumber] = useState<number>(1);
 
   //set user restricted address
-  const [authorizedUser, setAuthorizedUser] = useState('');
+  // const [authorizedUser, setAuthorizedUser] = useState('');
+
+  // set campaigns
+  const [campaigns, setCampaigns] = useState<string[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState('');
 
   //handle functions
   const handleEmailChange = (event: any) => {
@@ -72,15 +81,23 @@ export default function Front() {
     setAccessNumber(event.target.value);
   };
 
-  const authorizedUserChange = (event: any) => {
-    setAuthorizedUser(event.target.value);
+  // const authorizedUserChange = (event: any) => {
+  //   setAuthorizedUser(event.target.value);
+  // };
+
+  const handleCampaignChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setSelectedCampaign(event.target.value as string);
+  };
+
+  const handleInterestsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInterests(event.target.value);
   };
 
   //handle Submit
   const protectedDataSubmit = async () => {
     setErrorProtect('');
     if (email) {
-      const data: DataSchema = { email: email } as DataSchema;
+      const data: DataSchema = { email: email, preferencesAndInterests: interests } as DataSchema;
       try {
         setLoadingProtect(true);
         const ProtectedDataAddress = await protectDataFunc(data, name);
@@ -95,19 +112,34 @@ export default function Front() {
     }
   };
 
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+
+  const fetchCampaigns = async () => {
+    try {
+      const campaignAddresses = await yourContract.getCampaings();
+      setCampaigns(campaignAddresses);
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
+    }
+  };
+
   const grantAccessSubmit = async () => {
     setErrorGrant('');
     try {
-      setAuthorizedUser(authorizedUser);
       setLoadingGrant(true);
       const accessHash = await grantAccessFunc(
         protectedData,
-        authorizedUser,
+        selectedCampaign, // Use the selected campaign address as the authorized user
         WEB3MAIL_APP_ENS,
         accessNumber
       );
       setErrorGrant('');
       setGrantAccess(accessHash);
+      await sendEmail();
     } catch (error) {
       setErrorGrant(String(error));
       setGrantAccess(undefined);
@@ -115,13 +147,14 @@ export default function Front() {
     setLoadingGrant(false);
   };
 
+
   const revokeAccessSubmit = async () => {
     setRevokeAccess('');
     try {
       setLoadingRevoke(true);
       const tx = await revokeAccessFunc(
         protectedData,
-        authorizedUser,
+        selectedCampaign,
         WEB3MAIL_APP_ENS
       );
       setRevokeAccess(tx);
@@ -136,6 +169,22 @@ export default function Front() {
   const shortAddress = (address: string) => {
     return address.slice(0, 6) + '...' + address.slice(-4);
   };
+
+  const sendEmail = async () => {
+    const campaignInfo = await fetchCampaignInfo(selectedCampaign);
+
+    // Extract campaign information from the fetched data
+    const { emailSubject, emailContent } = campaignInfo;
+    sendMail(emailSubject, emailContent, protectedData);
+  };
+
+  const fetchCampaignInfo = async (campaignAddress: string) => {
+    // Implement logic to interact with the contract and fetch campaign details based on the campaignAddress
+    // Return the campaign information (emailSubject, emailContent) from the contract
+    const campaignInfo = await yourContract.getCampaignInfoByAddress(campaignAddress);
+    return campaignInfo;
+  };
+
 
   return (
     <Container disableGutters>
@@ -188,6 +237,16 @@ export default function Front() {
               variant="outlined"
               value={name}
               onChange={handleNameChange}
+              sx={{ mt: 3 }}
+            />
+            {/* New text field for preferences and interests */}
+            <TextField
+              fullWidth
+              id="preferencesAndInterests"
+              label="Preferences and Interests"
+              variant="outlined"
+              value={interests}
+              onChange={handleInterestsChange}
               sx={{ mt: 3 }}
             />
             {errorProtect && (
@@ -253,7 +312,7 @@ export default function Front() {
                 onChange={handleAccessNumberChange}
                 sx={{ mt: 3 }}
               />
-              <TextField
+              {/* <TextField
                 fullWidth
                 id="authorizedUser"
                 label="User Address Restricted"
@@ -262,7 +321,23 @@ export default function Front() {
                 value={authorizedUser}
                 onChange={authorizedUserChange}
                 type="text"
-              />
+              /> */}
+              {/* Dropdown menu for selecting campaigns */}
+              <TextField
+                select
+                fullWidth
+                label="Select Campaign"
+                variant="outlined"
+                sx={{ mt: 3 }}
+                value={selectedCampaign}
+                onChange={handleCampaignChange}
+              >
+                {campaigns.map((campaignAddress) => (
+                  <MenuItem key={campaignAddress} value={campaignAddress}>
+                    {campaignAddress}
+                  </MenuItem>
+                ))}
+              </TextField>
               {!loadingGrant && (
                 <Button
                   id="spacingStyle"
