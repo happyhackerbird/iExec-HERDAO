@@ -248,7 +248,7 @@ export default function Front() {
   const [accessNumber, setAccessNumber] = useState<number>(1);
 
   //set user restricted address
-  // const [authorizedUser, setAuthorizedUser] = useState('');
+  const [authorizedUser, setAuthorizedUser] = useState('');
 
   // set campaigns
   const [campaigns, setCampaigns] = useState([]);
@@ -272,12 +272,14 @@ export default function Front() {
     setAccessNumber(event.target.value);
   };
 
-  // const authorizedUserChange = (event: any) => {
-  //   setAuthorizedUser(event.target.value);
-  // };
+  const authorizedUserChange = (event: any) => {
+    setAuthorizedUser(event.target.value);
+  };
 
   const handleCampaignChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     setSelectedCampaign(event.target.value as string);
+    // Set the selected campaign address as the authorized user
+    setAuthorizedUser(event.target.value as string);
   };
 
   const handleInterestsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
