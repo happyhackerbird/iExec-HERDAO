@@ -23,6 +23,7 @@ import { useAccount, useDisconnect } from 'wagmi';
 import { IEXEC_EXPLORER_URL } from '../utils/config';
 import { DataSchema, GrantedAccess } from '@iexec/dataprotector';
 import { ethers } from 'ethers';
+import zIndex from '@mui/material/styles/zIndex';
 
 const abi = [
   {
@@ -80,27 +81,12 @@ const abi = [
         "type": "uint256"
       }
     ],
-    "name": "campaignL",
+    "name": "campaignOwners",
     "outputs": [
       {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "emailSubject",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "emailContent",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "topic",
-        "type": "string"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -179,31 +165,9 @@ const abi = [
     "name": "getList",
     "outputs": [
       {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "emailSubject",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "emailContent",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "topic",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct LoyaltyProgram.Campaign[]",
+        "internalType": "address[]",
         "name": "",
-        "type": "tuple[]"
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -213,8 +177,8 @@ const abi = [
 
 export default function Front() {
   //web3mail dapp END
-  // const WEB3MAIL_APP_ENS = 'web3mail.apps.iexec.eth';
-  const contract_address = "0x753e97db842601F3953B69098d2b2E1b53fe0f68"
+  const WEB3MAIL_APP_ENS = 'web3mail.apps.iexec.eth';
+  const contract_address = "0xFEbaf2Cd2e083E93d735C1508AD98D399526C409";
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
   const contract = new ethers.Contract(contract_address, abi, signer);
@@ -277,6 +241,7 @@ export default function Front() {
   };
 
   const handleCampaignChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    // const campaign = ;
     setSelectedCampaign(event.target.value as string);
     // Set the selected campaign address as the authorized user
     setAuthorizedUser(event.target.value as string);
@@ -326,8 +291,8 @@ export default function Front() {
       setLoadingGrant(true);
       const accessHash = await grantAccessFunc(
         protectedData,
-        selectedCampaign, // Use the selected campaign address as the authorized user
-        contract_address,
+        authorizedUser, // Use the selected campaign address as the authorized user
+        WEB3MAIL_APP_ENS,
         accessNumber
       );
       setErrorGrant('');
@@ -347,11 +312,12 @@ export default function Front() {
       setLoadingRevoke(true);
       const tx = await revokeAccessFunc(
         protectedData,
-        selectedCampaign,
-        contract_address
+        authorizedUser,
+        WEB3MAIL_APP_ENS
       );
       setRevokeAccess(tx);
     } catch (error) {
+      console.log(error);
       setErrorRevoke(String(error));
       setRevokeAccess('');
     }
@@ -364,7 +330,7 @@ export default function Front() {
   };
 
   const sendEmail = async () => {
-    const campaignInfo = await fetchCampaignInfo(selectedCampaign);
+    const campaignInfo = await fetchCampaignInfo(authorizedUser);
 
     // Extract campaign information from the fetched data
     const emailSubject = campaignInfo.emailSubject;

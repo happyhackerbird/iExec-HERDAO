@@ -12,7 +12,7 @@ contract LoyaltyProgram {
 
   // Mapping to store all campaigns
   mapping(address => Campaign) public campaigns;
-  Campaign[] public campaignL;
+  address[] public campaignOwners;
 
   // Event to emit when a new campaign is added
   event CampaignAdded(address indexed campaignAddress, string name);
@@ -47,7 +47,7 @@ contract LoyaltyProgram {
       topic
     );
     campaigns[msg.sender] = newCampaign;
-    campaignL.push(newCampaign);
+    campaignOwners.push(msg.sender);
 
     // Emit the CampaignAdded event
     emit CampaignAdded(msg.sender, name);
@@ -77,6 +77,6 @@ contract LoyaltyProgram {
   }
 
   function getList() public view returns (Campaign[] memory) {
-    return campaignL;
+    return campaignOwners;
   }
 }
