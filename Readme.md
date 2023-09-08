@@ -5,3 +5,13 @@ A decentralized loyalty rewards platform that allows users to participate in tar
 Users can register their interests and preferences and they are secured by DataProtector. Users are then able to grant access to their data to specific campaigns they select (opt-in).
 Businesses can register campaigns for specific topics, and if selected by users, engage them with targeted marketing without user’s identities being revealed, including rewarding them for engagement as a form of data monetization. Users can receive exclusive content without sharing personal information
 You could also add a pool categorization mechanism where those holding different token types (e.g. Liquidity Pool tokens or other DeFi tokens) are targeted by address. 
+
+
+Test app locally: 
+```
+git clone https://github.com/happyhackerbird/iExec-HERDAO.git
+cd iExec-HERDAO
+npm install
+npm run start 
+```
+
