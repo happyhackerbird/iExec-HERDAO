@@ -23,7 +23,7 @@ import { useAccount, useDisconnect } from 'wagmi';
 import { IEXEC_EXPLORER_URL } from '../utils/config';
 import { DataSchema, GrantedAccess } from '@iexec/dataprotector';
 import { ethers } from 'ethers';
-import zIndex from '@mui/material/styles/zIndex';
+// import zIndex from '@mui/material/styles/zIndex';
 
 const abi = [
   {
@@ -236,9 +236,9 @@ export default function Front() {
     setAccessNumber(event.target.value);
   };
 
-  const authorizedUserChange = (event: any) => {
-    setAuthorizedUser(event.target.value);
-  };
+  // const authorizedUserChange = (event: any) => {
+  //   setAuthorizedUser(event.target.value);
+  // };
 
   const handleCampaignChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     // const campaign = ;

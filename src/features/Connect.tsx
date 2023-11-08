@@ -1,4 +1,4 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useWeb3Modal } from "@web3modal/react";
 import { useAccount, useConnect } from "wagmi";
 import { useEffect } from "react";
